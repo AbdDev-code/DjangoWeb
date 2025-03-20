@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .status {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin: 0.5rem;
+        }
+
+        .btn-google {
+            background: #fff;
+            color: #757575;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-google:hover {
+            background: #f8f9fa;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-logout:hover {
+            background: #c82333;
+        }
+
+        .google-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+        }
+
+        .user-info {
+            display: none;
+            margin-top: 1rem;
+            text-align: left;
+        }
+
+        .user-info.show {
+            display: block;
+        }
+
+        .user-info p {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+
+        .user-info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Google orqali kirish</h1>
+        
+        <div id="status" class="status"></div>
+
+        <div id="loginButton">
+            <button class="btn btn-google" onclick="loginWithGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" 
+                     alt="Google" class="google-icon">
+                Google orqali kirish
+            </button>
+        </div>
+
+        <div id="userInfo" class="user-info">
+            <p><strong>Ism:</strong> <span id="userName"></span></p>
+            <p><strong>Email:</strong> <span id="userEmail"></span></p>
+            <button class="btn btn-logout" onclick="logout()">Chiqish</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/auth';
+        const statusElement = document.getElementById('status');
+        const loginButton = document.getElementById('loginButton');
+        const userInfo = document.getElementById('userInfo');
+        const userNameElement = document.getElementById('userName');
+        const userEmailElement = document.getElementById('userEmail');
+
+        function showStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function loginWithGoogle() {
+            window.location.href = `${API_URL}/google`;
+        }
+
+        async function checkLoginStatus() {
+            try {
+                const response = await fetch(`${API_URL}/status`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                if (data.isAuthenticated && data.user) {
+                    loginButton.style.display = 'none';
+                    userInfo.classList.add('show');
+                    userNameElement.textContent = data.user.firstName || 'N/A';
+                    userEmailElement.textContent = data.user.email || 'N/A';
+                    showStatus('Muvaffaqiyatli kirdingiz!', 'success');
+                }
+            } catch (error) {
+                console.error('Xatolik:', error);
+                showStatus('Serverga ulanishda xatolik yuz berdi', 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch(`${API_URL}/logout`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    loginButton.style.display = 'block';
+                    userInfo.classList.remove('show');
+                    showStatus('Muvaffaqiyatli chiqdingiz', 'success');
+                } else {
+                    showStatus('Chiqishda xatolik yuz berdi', 'error');
+                }
+            } catch (error) {
+                console.error('Xatolik:', error);
+                showStatus('Serverga ulanishda xatolik yuz berdi', 'error');
+            }
+        }
+
+        // Sahifa yuklanganda login holatini tekshirish
+        checkLoginStatus();
+    </script>
+</body>
+</html>
